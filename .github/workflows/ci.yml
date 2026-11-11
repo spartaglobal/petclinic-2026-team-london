@@ -45,7 +45,6 @@ jobs:
         working-directory: spring-petclinic-rest
         run: ./mvnw test
       
-    
       - name: Coverage report
         working-directory: spring-petclinic-rest
         run: ./mvnw jacoco:report
@@ -53,7 +52,7 @@ jobs:
       - name: Coverage gate
         working-directory: spring-petclinic-rest
         run: ./mvnw jacoco:check
-        
+
 
       - name: Upload test & coverage reports
         if: always()
