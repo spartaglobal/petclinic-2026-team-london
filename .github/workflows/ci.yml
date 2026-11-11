@@ -41,9 +41,6 @@ jobs:
       - name: Make Maven wrapper executable
         run: chmod +x spring-petclinic-rest/mvnw
         
-
-        
-
       - name: Run tests
         working-directory: spring-petclinic-rest
         run: ./mvnw test
@@ -77,9 +74,25 @@ jobs:
         with:
           node-version-file: spring-petclinic-angular/.nvmrc
 
-      # - name: Build jar
-      # - name: Start API
-      # - name: Run Newman
+      - name: Build jar
+        working-directory: spring-petclinic-rest
+        run: ./mvnw -DskipTests package
+
+      - name: Start API
+        working-directory: spring-petclinic-rest
+        run: |
+          nohup java -jar target/*.jar > api.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:9966/petclinic/actuator/health && exit 0
+            sleep 2
+          done
+          echo "API did not start"; cat api.log; exit 1
+
+      - name: Run Newman
+        run: |
+          npx --yes newman@6 run spring-petclinic-rest/src/test/postman/petclinic-nonregressiontests.postman_collection.json \
+            --reporters cli,junit \
+            --reporter-junit-export spring-petclinic-rest/src/test/postman/reports/newman.xml
 
       - name: Upload Newman report
         if: always()
