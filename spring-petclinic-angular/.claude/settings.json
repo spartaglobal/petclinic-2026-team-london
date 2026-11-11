@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm start)",
+      "Bash(nvm use *)",
+      "Bash(curl -s http://localhost:4200*)"
+    ]
+  }
+}
