@@ -74,6 +74,9 @@ jobs:
         with:
           node-version-file: spring-petclinic-angular/.nvmrc
 
+      - name: Make Maven wrapper executable
+        run: chmod +x spring-petclinic-rest/mvnw
+
       - name: Build jar
         working-directory: spring-petclinic-rest
         run: ./mvnw -DskipTests package
