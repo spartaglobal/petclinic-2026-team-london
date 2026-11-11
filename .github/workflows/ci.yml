@@ -146,8 +146,7 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
       - name: Run E2E tests
-        run: npx playwright test --reporter=html
-
+        run: npm run e2e --prefix spring-petclinic-angular
 
       - name: Upload Playwright report
         if: always()
