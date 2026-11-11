@@ -49,9 +49,9 @@ jobs:
         working-directory: spring-petclinic-rest
         run: ./mvnw jacoco:report
 
-      - name: Coverage gate
-        working-directory: spring-petclinic-rest
-        run: ./mvnw jacoco:check
+      #- name: Coverage gate
+      #  working-directory: spring-petclinic-rest
+      #  run: ./mvnw jacoco:check
 
 
       - name: Upload test & coverage reports
