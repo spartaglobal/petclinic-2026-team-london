@@ -150,8 +150,10 @@ jobs:
 
       - name: Install dependencies
         run: npm ci --prefix spring-petclinic-angular
+      - name: Install dependencies 2 --prefix spring-petclinic-angular
+        run: npm install
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps
+        run: npx playwright install
       - name: Run E2E tests
         run: npm run test:e2e --prefix spring-petclinic-angular
 
