@@ -127,10 +127,14 @@ jobs:
           cache: npm
           cache-dependency-path: spring-petclinic-angular/package-lock.json
 
-      # - name: Install dependencies
-      # - name: Lint
-      # - name: Unit tests (Vitest)
-      # - name: Build
+      - name: Install dependencies
+        run: npm ci --prefix spring-petclinic-angular
+      - name: Lint
+        run: npm run lint --prefix spring-petclinic-angular
+      - name: Unit tests (Vitest)
+        run: npm run test --prefix spring-petclinic-angular
+      - name: Build
+        run: npm run build --prefix spring-petclinic-angular
 
   e2e:
     name: Frontend – Playwright E2E & accessibility
