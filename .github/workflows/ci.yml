@@ -38,13 +38,15 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           cache: maven
 
-      # - name: Make Maven wrapper executable
-        run: echo $GITHUB_WORKSPACE
+      - name: Make Maven wrapper executable
+        run: chmod +x spring-petclinic-rest/mvnw
         
 
         
 
-      # - name: Run tests
+      - name: Run tests
+        working-directory: spring-petclinic-rest
+        run: ./mvnw test
       # - name: Coverage report
       # - name: Coverage gate
 
