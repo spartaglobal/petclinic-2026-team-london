@@ -11,7 +11,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [dev-ci]
   pull_request:
   workflow_dispatch:
 
@@ -28,7 +28,7 @@ env:
 jobs:
   backend:
     name: Backend – unit tests & coverage gate
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
@@ -39,6 +39,11 @@ jobs:
           cache: maven
 
       # - name: Make Maven wrapper executable
+        run: echo $GITHUB_WORKSPACE
+        
+
+        
+
       # - name: Run tests
       # - name: Coverage report
       # - name: Coverage gate
