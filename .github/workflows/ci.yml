@@ -141,9 +141,13 @@ jobs:
           cache: npm
           cache-dependency-path: spring-petclinic-angular/package-lock.json
 
-      # - name: Install dependencies
-      # - name: Install Playwright browsers
-      # - name: Run E2E tests
+      - name: Install dependencies
+        run: npm ci --prefix spring-petclinic-angular
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+      - name: Run E2E tests
+        run: npx playwright test --reporter=html
+
 
       - name: Upload Playwright report
         if: always()
