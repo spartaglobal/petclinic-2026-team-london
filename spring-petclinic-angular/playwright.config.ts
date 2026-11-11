@@ -3,6 +3,8 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './e2e',
   testMatch: '**/*.e2e-spec.ts',
+  // One retry in CI so a test that passes only on retry is reported as flaky
+  retries: process.env.CI ? 1 : 0,
   webServer: {
     command: 'npm start -- --host 127.0.0.1',
     url: 'http://127.0.0.1:4200',
