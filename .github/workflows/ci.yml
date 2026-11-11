@@ -11,7 +11,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [dev-ci]
   pull_request:
   workflow_dispatch:
 
@@ -28,7 +28,7 @@ env:
 jobs:
   backend:
     name: Backend – unit tests & coverage gate
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
@@ -38,10 +38,21 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           cache: maven
 
-      # - name: Make Maven wrapper executable
-      # - name: Run tests
-      # - name: Coverage report
-      # - name: Coverage gate
+      - name: Make Maven wrapper executable
+        run: chmod +x spring-petclinic-rest/mvnw
+        
+      - name: Run tests
+        working-directory: spring-petclinic-rest
+        run: ./mvnw test
+      
+      - name: Coverage report
+        working-directory: spring-petclinic-rest
+        run: ./mvnw jacoco:report
+
+      - name: Coverage gate
+        working-directory: spring-petclinic-rest
+        run: ./mvnw jacoco:check
+
 
       - name: Upload test & coverage reports
         if: always()
@@ -70,9 +81,28 @@ jobs:
         with:
           node-version-file: spring-petclinic-angular/.nvmrc
 
-      # - name: Build jar
-      # - name: Start API
-      # - name: Run Newman
+      - name: Make Maven wrapper executable
+        run: chmod +x spring-petclinic-rest/mvnw
+
+      - name: Build jar
+        working-directory: spring-petclinic-rest
+        run: ./mvnw -DskipTests package
+
+      - name: Start API
+        working-directory: spring-petclinic-rest
+        run: |
+          nohup java -jar target/*.jar > api.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:9966/petclinic/actuator/health && exit 0
+            sleep 2
+          done
+          echo "API did not start"; cat api.log; exit 1
+
+      - name: Run Newman
+        run: |
+          npx --yes newman@6 run spring-petclinic-rest/src/test/postman/petclinic-nonregressiontests.postman_collection.json \
+            --reporters cli,junit \
+            --reporter-junit-export spring-petclinic-rest/src/test/postman/reports/newman.xml
 
       - name: Upload Newman report
         if: always()
@@ -96,10 +126,14 @@ jobs:
           cache: npm
           cache-dependency-path: spring-petclinic-angular/package-lock.json
 
-      # - name: Install dependencies
-      # - name: Lint
-      # - name: Unit tests (Vitest)
-      # - name: Build
+      - name: Install dependencies
+        run: npm ci --prefix spring-petclinic-angular
+      - name: Lint
+        run: npm run lint --prefix spring-petclinic-angular
+      - name: Unit tests (Vitest)
+        run: npm run test --prefix spring-petclinic-angular
+      - name: Build
+        run: npm run build --prefix spring-petclinic-angular
 
   e2e:
     name: Frontend – Playwright E2E & accessibility
@@ -114,10 +148,12 @@ jobs:
           cache: npm
           cache-dependency-path: spring-petclinic-angular/package-lock.json
 
-      # - name: Install dependencies
-      # - name: Install Playwright browsers
-      # - name: Run E2E tests
-
+      - name: Install dependencies
+        run: npm ci --prefix spring-petclinic-angular
+      - name: Install Playwright browsers
+        run: npx playwright install --prefix spring-petclinic-angular
+      - name: Run E2E tests
+        run: npm run e2e --prefix spring-petclinic-angular
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
