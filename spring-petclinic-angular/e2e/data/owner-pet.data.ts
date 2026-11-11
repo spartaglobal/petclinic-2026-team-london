@@ -41,6 +41,11 @@ export function newOwner(): OwnerData {
   };
 }
 
+/** A pet type name not in the API's seed data (cat, dog, lizard, snake, bird, hamster). */
+export function newPetTypeName(): string {
+  return `Testtype${randomLetters(8)}`;
+}
+
 export function newPet(): PetData {
   return {
     name: `Testpet${randomLetters(6)}`,

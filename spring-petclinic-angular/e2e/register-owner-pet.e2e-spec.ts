@@ -1,5 +1,5 @@
 import { APIRequestContext, expect, Page, test } from '@playwright/test';
-import { API_URL, newOwner, newPet, OwnerData } from './data/owner-pet.data';
+import { API_URL, newOwner, newPet, newPetTypeName, OwnerData } from './data/owner-pet.data';
 
 // These tests run against the real API (no page.route mocking).
 
@@ -96,23 +96,29 @@ test.describe('Register an owner and a pet', () => {
     });
   });
 
-  test('Owner cannot be saved without a telephone', async ({ page }) => {
+  test('Owner can be saved without a telephone', async ({ page, request }) => {
+    // Known defect DEF-XXX: telephone wrongly required (PO confirmed optional)
+    test.fail();
     const owner = newOwner();
 
     // Given I have completed the add-owner form except telephone
     await page.goto('/owners/add');
     await fillOwnerForm(page, owner, { telephone: false });
 
-    // When I enter a telephone number and then clear it
-    const telephone = page.getByLabel('Telephone', { exact: true });
-    await telephone.fill(owner.telephone);
-    await telephone.fill('');
+    // When I save the owner
+    const addOwner = page.getByRole('button', { name: 'Add Owner' });
+    await expect(addOwner).toBeEnabled();
+    await addOwner.click();
 
-    // Then the form shows a required-field message for telephone
-    await expect(page.getByText('Phone number is required')).toBeVisible();
-
-    // And the Add Owner button is disabled
-    await expect(page.getByRole('button', { name: 'Add Owner' })).toBeDisabled();
+    // Then the owner is saved
+    await expect(page).toHaveURL(/\/owners$/);
+    const saved = await findOwnerViaApi(request, owner.lastName);
+    expect(saved).toMatchObject({
+      firstName: owner.firstName,
+      lastName: owner.lastName,
+      address: owner.address,
+      city: owner.city
+    });
   });
 
   test('Pet cannot be saved without a type', async ({ page, request }) => {
@@ -131,5 +137,37 @@ test.describe('Register an owner and a pet', () => {
 
     // Then the Save Pet button is disabled
     await expect(page.getByRole('button', { name: 'Save Pet' })).toBeDisabled();
+  });
+
+  test('Add a pet of a type not yet listed', async ({ page, request }) => {
+    const typeName = newPetTypeName();
+    const owner = newOwner();
+    const pet = { ...newPet(), type: typeName };
+    const ownerId = await createOwnerViaApi(request, owner);
+
+    // Given a new pet type is created on the Pet Types page
+    await page.goto('/pettypes');
+    await expect(page.getByRole('heading', { name: 'Pet Types' })).toBeVisible();
+    await page.getByRole('button', { name: 'Add', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'New Pet Type' })).toBeVisible();
+    await page.getByLabel('Name', { exact: true }).fill(typeName);
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    // The add form closes once the API has saved the type
+    await expect(page.getByRole('heading', { name: 'New Pet Type' })).toBeHidden();
+
+    // When I add a pet of that type to a registered owner
+    await page.goto(`/owners/${ownerId}`);
+    await page.getByRole('button', { name: 'Add New Pet' }).click();
+    await expect(page.getByRole('heading', { name: 'Add Pet' })).toBeVisible();
+    await page.getByLabel('Name', { exact: true }).fill(pet.name);
+    await page.getByLabel('Birth Date', { exact: true }).fill(pet.birthDateInput);
+    await page.getByLabel('Type', { exact: true }).selectOption({ label: typeName });
+    await page.getByRole('button', { name: 'Save Pet' }).click();
+
+    // Then the pet and its new type appear under Pets and Visits
+    await expect(page).toHaveURL(new RegExp(`/owners/${ownerId}$`));
+    await expect(page.getByRole('heading', { name: 'Pets and Visits' })).toBeVisible();
+    await expect(page.getByRole('row', { name: `Name ${pet.name}`, exact: true })).toBeVisible();
+    await expect(page.getByRole('row', { name: `Type ${typeName}`, exact: true })).toBeVisible();
   });
 });
